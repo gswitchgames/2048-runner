@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>2048 Runner</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+</head>
+
+<body style="text-align: center; padding: 0; border: 0; margin: 0;">
+    <div id="unity-container" class="unity-desktop"
+        style="width: 100%; height: 100%; overflow-x: hidden; overflow-y: hidden;">
+        <canvas id="unity-canvas" width=960 height=540
+            style="width: 960px; height: 540px; background: #231F20"></canvas>
+        <div id="unity-loading-bar">
+            <div id="unity-logo"></div>
+            <div id="unity-progress-bar-empty">
+                <div id="unity-progress-bar-full"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var container = document.querySelector("#unity-container");
+        var canvas = document.querySelector("#unity-canvas");
+        var loadingBar = document.querySelector("#unity-loading-bar");
+        var progressBarFull = document.querySelector("#unity-progress-bar-full");
+
+        var buildUrl = "Build";
+        var loaderUrl = buildUrl + "/v1.0.3.loader.js";
+        var config = {
+            dataUrl: buildUrl + "/b64721c4a8df9e11c13de3c56727842a.data",
+            frameworkUrl: buildUrl + "/c5641e04eb0079aec0738f1e198a5eb0.js?v=1",
+        codeUrl: buildUrl + "/4bb337b0da255420a76faf833b053a8c.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+            companyName: "XiferGames",
+            productName: "2048 Runner",
+            productVersion: "1.0.3",
+        };
+
+        //Mobile
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            var meta = document.createElement('meta');
+            meta.name = 'viewport';
+            meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+            document.getElementsByTagName('head')[0].appendChild(meta);
+
+            var canvas = document.querySelector("#unity-canvas");
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
+            canvas.style.position = "fixed";
+
+            document.body.style.textAlign = "left";
+
+            window.addEventListener("orientationchange", event => {
+                canvas.style.width = "100%";
+                canvas.style.height = "100%";
+            });
+
+        }
+
+        loadingBar.style.display = "block";
+
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+            createUnityInstance(canvas, config, (progress) => {
+                progressBarFull.style.width = 100 * progress + "%";
+            }).then((unityInstance) => {
+                loadingBar.style.display = "none";
+            }).catch((message) => {
+                alert(message);
+            });
+        };
+        document.body.appendChild(script);
+    </script>
+
+    <script>
+        const q = (selector) => document.querySelector(selector);
+
+        const gCanvasElement = q('#unity-canvas');
+        const gameContainer = q('body')
+
+        const initialDimensions = { width: parseInt(gCanvasElement.style.width, 10), height: parseInt(gCanvasElement.style.height, 10) };
+
+        gameContainer.style.width = '100%';
+        gameContainer.style.height = '100%';
+
+        const getCanvasFromMutationsList = (mutationsList) => {
+            for (let mutationItem of mutationsList) {
+                for (let addedNode of mutationItem.addedNodes) {
+                    if (addedNode.id === '#canvas') {
+                        return addedNode;
+                    }
+                }
+            }
+            return null;
+        }
+
+        const setDimensions = () => {
+            gameContainer.style.position = 'absolute';
+            gameContainer.style.overflow = 'hidden';
+            var winW = parseInt(window.getComputedStyle(gameContainer).width, 10);
+            var winH = parseInt(window.getComputedStyle(gameContainer).height, 10);
+
+            const widthDim = initialDimensions.width == 0 ? minW : winW / initialDimensions.width;
+            const heightDim = initialDimensions.height == 0 ? winH : winH / initialDimensions.height;
+
+            var scale = Math.min(widthDim, heightDim);
+
+            gCanvasElement.style.display = '';
+            gCanvasElement.style.overflow = 'hidden';
+            gCanvasElement.setAttribute('scrolling', 'no');
+
+            var fitW = Math.round(initialDimensions.width * scale * 100) / 100;
+            var fitH = Math.round(initialDimensions.height * scale * 100) / 100;
+
+            gCanvasElement.style.width = fitW + "px";
+            gCanvasElement.style.height = fitH + "px";
+        }
+
+        window.setDimensions = setDimensions;
+
+        const registerCanvasWatcher = () => {
+            let debounceTimeout = null;
+            const debouncedSetDimensions = () => {
+                if (debounceTimeout !== null) {
+                    clearTimeout(debounceTimeout);
+                }
+                debounceTimeout = setTimeout(setDimensions, 1);
+            }
+            window.addEventListener('resize', debouncedSetDimensions, false);
+            setDimensions();
+        }
+
+        const i = 0;
+        registerCanvasWatcher();
+
+        new MutationObserver(function (attributesMutation) {
+            this.disconnect();
+            setTimeout(setDimensions, 1)
+        }).observe(gameContainer, { attributes: true });
+    </script>
+
+
+
+</body>
+
+</html>
